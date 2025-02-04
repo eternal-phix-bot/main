@@ -170,28 +170,11 @@ def process(update):
                     messages=[{'role': 'user', 'content': text}, {'role': 'system', 'content': INITIAL_INSTRUCTION}],
                     stream=True)
 
-                output = ""
+                output = response.choices[0].message.content
                 edit_id = requests.post(f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage',
-                    json={'chat_id': GROUP, 'reply_to_message_id': message_id, 'text': '*Eternal © 2024*',
+                    json={'chat_id': GROUP, 'reply_to_message_id': message_id, 'text': '*Eternal © 2025*',
                           'parse_mode': 'Markdown'}).json()['result']['message_id']
 
-                last_print_time = time.time()
-                for chunk in response:
-                    if hasattr(chunk, 'choices') and len(chunk.choices) > 0:
-                        # Append the chunk to the collected response
-                        for choice in chunk.choices:
-                            if hasattr(choice, 'delta') and choice.delta is not None and hasattr(choice.delta, 'content'):
-                                content = choice.delta.content
-                                if content is not None:
-                                    output += content
-
-                    # Print the collected response every 2 seconds
-                    current_time = time.time()
-                    if current_time - last_print_time >= 2:
-                        requests.post(f'https://api.telegram.org/bot{BOT_TOKEN}/editMessageText',
-                            json={'chat_id': GROUP, 'text': f'{output}', 'message_id': edit_id,
-                                  'parse_mode': 'Markdown'}).json()
-                        last_print_time = current_time
                 requests.post(f'https://api.telegram.org/bot{BOT_TOKEN}/editMessageText',
                     json={'chat_id': GROUP, 'text': output, 'message_id': edit_id, 'parse_mode': 'Markdown'})
             elif ('reply_to_message' in update['message'] and update['message']['reply_to_message']['from']['id'] == BOT_ID) or update['message']['text'] == '@phix_bot':
@@ -227,40 +210,16 @@ def process(update):
                     stream=True
                 )
 
-                output = ""
+                output = response.choices[0].message.content
                 edit_id = requests.post(
                     f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage',
                     json={
                         'chat_id': GROUP,
                         'reply_to_message_id': talker_message_id,
-                        'text': '*Eternal © 2024*',
+                        'text': '*Eternal © 2025*',
                         'parse_mode': 'Markdown'
                     }
                 ).json()['result']['message_id']
-
-                last_print_time = time.time()
-
-                for chunk in response:
-                    if hasattr(chunk, 'choices') and chunk.choices:
-                        for choice in chunk.choices:
-                            if hasattr(choice, 'delta') and choice.delta and hasattr(choice.delta, 'content'):
-                                content = choice.delta.content
-                                if content:
-                                    output += content
-
-                    # Print the collected response every 2 seconds
-                    current_time = time.time()
-                    if current_time - last_print_time >= 2:
-                        requests.post(
-                            f'https://api.telegram.org/bot{BOT_TOKEN}/editMessageText',
-                            json={
-                                'chat_id': GROUP,
-                                'text': output,
-                                'message_id': edit_id,
-                                'parse_mode': 'Markdown'
-                            }
-                        )
-                        last_print_time = current_time
 
                 requests.post(
                     f'https://api.telegram.org/bot{BOT_TOKEN}/editMessageText',
@@ -371,5 +330,5 @@ def database_update(query, update):
     return collection.update_one(query, update).matched_count
 
 if __name__ == '__main__':
-    app.run(debug=False)
-    #random()
+    #app.run(debug=False)
+    random()
