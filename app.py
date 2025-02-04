@@ -167,8 +167,8 @@ def process(update):
 
                 response = client.chat.completions.create(provider='',  # Replace with your provider
                     model="gpt-4o-mini",
-                    messages=[{'role': 'user', 'content': text}, {'role': 'system', 'content': INITIAL_INSTRUCTION}],
-                    stream=True)
+                    messages=[{'role': 'user', 'content': text}, {'role': 'system', 'content': INITIAL_INSTRUCTION}]
+                )
 
                 output = response.choices[0].message.content
                 edit_id = requests.post(f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage',
