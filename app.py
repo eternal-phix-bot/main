@@ -305,7 +305,7 @@ def sticker(text, message_id):
     params = {'chat_id': GROUP,
         'message_id': message_id, 'is_big': True,
         'reaction': json.dumps([{'type': 'emoji', 'emoji': response.choices[0].message.content[-1]}])}
-    requests.post(f'https://api.telegram.org/bot{BOT_TOKEN}/setMessageReaction', params=params)
+    print(requests.post(f'https://api.telegram.org/bot{BOT_TOKEN}/setMessageReaction', params=params).json())
 
 def database_search(query):
     connection_string = f"mongodb+srv://{USERNAME}:{PASSWORD}@core.pur20xh.mongodb.net/?appName=Core"
