@@ -295,7 +295,6 @@ def database_search(query):
     collection = db['users']
     return collection.find_one(query)
 
-
 def database_insert(record):
     connection_string = f"mongodb+srv://{USERNAME}:{PASSWORD}@core.pur20xh.mongodb.net/?appName=Core"
     client = MongoClient(connection_string)
