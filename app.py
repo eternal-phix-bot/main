@@ -160,6 +160,7 @@ def process(update):
         if 'text' in update['message']:
             print('hello')
             if update['message']['from']['id'] == 1087968824:
+                print("first flow")
                 text = update['message']['text']
                 message_id = update['message']['message_id']
 
@@ -248,6 +249,7 @@ def process(update):
                 database_update(query, updated_data)
 
             else:
+                print("third flow")
                 message = update['message']['text']
                 message_id = update['message']['message_id']
                 sender_name = update['message']['from']['first_name']
