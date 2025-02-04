@@ -371,5 +371,5 @@ def database_update(query, update):
     return collection.update_one(query, update).matched_count
 
 if __name__ == '__main__':
-    #app.run(debug=False)
-    random()
+    app.run(debug=False)
+    #random()
