@@ -165,9 +165,10 @@ def process(update):
 
                 client = Client()
 
-                response = client.chat.completions.create(provider='',  # Replace with your provider
+                response = client.chat.completions.create(  # Replace with your provider
                     model="gpt-4o-mini",
-                    messages=[{'role': 'user', 'content': text}, {'role': 'system', 'content': INITIAL_INSTRUCTION}]
+                    messages=[{'role': 'user', 'content': text}, {'role': 'system', 'content': INITIAL_INSTRUCTION}],
+                    web_search = False
                 )
 
                 output = response.choices[0].message.content
@@ -204,10 +205,8 @@ def process(update):
 
                 client = Client()
                 response = client.chat.completions.create(
-                    provider='',  # Replace with your provider
                     model="gpt-4o-mini",
                     messages=instructed_history,
-                    stream=True
                 )
 
                 output = response.choices[0].message.content
@@ -270,10 +269,8 @@ def process(update):
 
                 client = Client()
                 response = client.chat.completions.create(
-                    provider='',  # Replace with your provider
                     model="gpt-4o-mini",
                     messages=copy_history,
-                    stream=False
                 )
 
                 output = response.choices[0].message.content
@@ -300,8 +297,8 @@ def process(update):
 
 def sticker(text, message_id):
     client = Client()
-    response = client.chat.completions.create(provider='',  # Replace with your provider
-        model="gpt-4o-mini", messages=[{'role': 'user', 'content': text},{'role': 'system', 'content': STICKER_INSTRUCTION}], stream=False)
+    response = client.chat.completions.create(  # Replace with your provider
+        model="gpt-4o-mini", messages=[{'role': 'user', 'content': text},{'role': 'system', 'content': STICKER_INSTRUCTION}])
 
     params = {'chat_id': GROUP,
         'message_id': message_id, 'is_big': True,
