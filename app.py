@@ -278,7 +278,7 @@ def process(update):
                 output = response.choices[0].message.content
 
                 # MAKING THE REQUEST TO AI
-                if output[-6:] != "IGNORE":
+                if "ignore" not in output.lower().split():
                     history.append({"role": "assistant", "content": output})
                     requests.post(
                         f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage',
