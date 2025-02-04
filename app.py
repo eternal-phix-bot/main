@@ -174,7 +174,7 @@ def process(update):
 
                 output = response.choices[0].message.content
                 edit_id = requests.post(f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage',
-                    json={'chat_id': GROUP, 'reply_to_message_id': message_id, 'text': '*Eternal © 2025*',
+                    json={'chat_id': GROUP, 'reply_to_message_id': message_id, 'text': '*Eternal Electronics © 2025*',
                           'parse_mode': 'Markdown'}).json()['result']['message_id']
 
                 requests.post(f'https://api.telegram.org/bot{BOT_TOKEN}/editMessageText',
@@ -216,7 +216,7 @@ def process(update):
                     json={
                         'chat_id': GROUP,
                         'reply_to_message_id': talker_message_id,
-                        'text': '*Eternal © 2025*',
+                        'text': '*Eternal Electronics © 2025*',
                         'parse_mode': 'Markdown'
                     }
                 ).json()['result']['message_id']
@@ -301,7 +301,7 @@ def sticker(text, message_id):
     client = Client()
     response = client.chat.completions.create(  # Replace with your provider
         model="gpt-4o-mini", messages=[{'role': 'user', 'content': text},{'role': 'system', 'content': STICKER_INSTRUCTION}])
-
+    print(response.choices[0].message.content[-1])
     params = {'chat_id': GROUP,
         'message_id': message_id, 'is_big': True,
         'reaction': json.dumps([{'type': 'emoji', 'emoji': response.choices[0].message.content[-1]}])}
