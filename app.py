@@ -1,18 +1,9 @@
-import os
 import time
 import json
-import imaplib
 import requests
-import PIL.Image
-import urllib.parse
 from g4f.client import Client
 from pymongo import MongoClient
-import google.generativeai as genai
-from flask import Flask, render_template, request, jsonify
-
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+from flask import Flask, request
 
 INSTRUCTION = """
 General Behavior:

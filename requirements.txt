@@ -1,0 +1,5 @@
+gunicorn
+requests
+pymongo
+flask
+g4f
