@@ -93,7 +93,7 @@ def ask_gpt(data):
 
     client = Client()
     response = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="llama-3.3-70b",
         messages=[{"role": "user", "content": "Hello"}],
         web_search=False
     )
@@ -167,7 +167,7 @@ def process(update):
                 client = Client()
 
                 response = client.chat.completions.create(  # Replace with your provider
-                    model="gpt-4o-mini",
+                    model="llama-3.3-70b",
                     messages=[{'role': 'user', 'content': text}, {'role': 'system', 'content': INITIAL_INSTRUCTION}],
                     web_search = False
                 )
@@ -271,7 +271,7 @@ def process(update):
 
                 client = Client()
                 response = client.chat.completions.create(
-                    model="gpt-4o-mini",
+                    model="llama-3.3-70b",
                     messages=copy_history,
                 )
 
@@ -300,7 +300,7 @@ def process(update):
 def sticker(text, message_id):
     client = Client()
     response = client.chat.completions.create(  # Replace with your provider
-        model="gpt-4o-mini", messages=[{'role': 'user', 'content': text},{'role': 'system', 'content': STICKER_INSTRUCTION}])
+        model="llama-3.3-70b", messages=[{'role': 'user', 'content': text},{'role': 'system', 'content': STICKER_INSTRUCTION}])
     print(response.choices[0].message.content[-1])
     params = {'chat_id': GROUP,
         'message_id': message_id, 'is_big': True,
