@@ -5,6 +5,8 @@ from g4f.client import Client
 from pymongo import MongoClient
 from flask import Flask, request
 
+global last_update_id
+
 INSTRUCTION = """
 General Behavior:
 
@@ -55,11 +57,12 @@ Examples of Responses:
         “Sorry, that’s personal.”
 """
 
-BOT_TOKEN = '6966843961:AAHWbv6Mh8yU4AO4T6HGhAD5x64Fcg0VHtA'
+BOT_TOKEN = '6966843961:AAGearZulye_VIncbwIEjCqmYHIQL0zTioc'
 CONNECTION = 'l5fqrAiviEj0CAAALAJbw05zldA'
 USERNAME = 'look'
 PASSWORD = 'eternal'
 GROUP = -1002151725792
+GROUP_UPDATES = -1002038252590
 BOT_ID = 6966843961
 STICKER_INSTRUCTION = 'Based on the text, choose one reaction from the stickers provided and send that sticker only if the message is relevant or impactful enough to warrant a response. If the message is not important or if it feels overwhelming to react, you may choose not to respond and send I which stands for ignore. Remember, like a real human, you don\'t need to react to every message—only those that genuinely resonate or require acknowledgment. Stickers to choose from: 👍👎❤🔥🥰👏😁🤔🤯😱🤬😢🎉🤩🤮💩🙏👌🕊🤡🥱🥴😍🐳❤‍🔥🌚🌭💯🤣⚡🍌🏆💔🤨😐🍓🍾💋🖕😈😴😭🤓👻👨‍💻👀🎃🙈😇😨🤝✍🤗🫡🎅🎄☃💅🤪🗿🆒💘🙉🦄😘💊🙊😎👾🤷‍♂🤷🤷‍♀😡'
 CHAT_INSTRUCTION = 'You are a real human. Your name is Phix. You are using Telegram platform and replying to the messages. Make a relevant comment on the user\'s post and make it look like how real human do!'
@@ -70,23 +73,31 @@ REACTIONS = ['👍', '🔥', '❤️', '👏', '🕊']
 app = Flask(__name__, template_folder='.')
 
 def ask_gpt(data):
-    url = 'https://api.groq.com/openai/v1/chat/completions'
+    #url = 'https://api.groq.com/openai/v1/chat/completions'
 
-    headers = {
-        'Authorization': f'Bearer {API_KEY}',
-        'Content-Type': 'application/json'
-    }
+    #headers = {
+    #    'Authorization': f'Bearer {API_KEY}',
+    #    'Content-Type': 'application/json'
+    #}
 
-    payload = {
-        "messages": data,
-        "model": "llama-3.1-70b-versatile",
-        "temperature": 0.8,
-        "max_tokens": 8000,
-        "top_p": 1,
-        "stream": False
-    }
+    #payload = {
+    #    "messages": data,
+    #    "model": "llama-3.1-70b-versatile",
+    #    "temperature": 0.8,
+    #    "max_tokens": 8000,
+    #    "top_p": 1,
+    #    "stream": False
+    #}
 
-    return requests.post(url, headers=headers, data=json.dumps(payload))
+    #return requests.post(url, headers=headers, data=json.dumps(payload))
+
+    client = Client()
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": "Hello"}],
+        web_search=False
+    )
+    print(response.choices[0].message.content)
 
 
 @app.route('/activate', methods=['GET'])
@@ -95,12 +106,33 @@ def activate():
 
 
 @app.route('/', methods=['POST'])
-def index():
-    if request.method == 'POST':
-        process(json.loads(request.get_data()))
-        return 'Success'
-    else:
+def handle_webhook():
+    update = json.loads(request.get_data())
+    try:
+        process(update)
+        structured_string = json.dumps(update, indent=4, sort_keys=True)
+        data = {'chat_id': GROUP_UPDATES,'text': f"*UPDATE*```\n{structured_string}\n```", 'parse_mode': 'MarkdownV2'}
+        requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", data=data)
+        return 'Success!'
+    except Exception as e:
+        print(e)
+        structured_string = json.dumps(update, indent=4, sort_keys=True)
+        data = {'chat_id': GROUP_UPDATES,'text': f"*ERROR*```\n{structured_string}\n```", 'parse_mode': 'MarkdownV2'}
+        requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", data=data)
         return 'Error'
+
+def random():
+    global last_update_id
+    last_update_id = -1
+    while True:
+        try:
+            print("ok")
+            updates = requests.get(f"https://api.telegram.org/bot{BOT_TOKEN}/getUpdates?offset={last_update_id}").json().get('result', [])
+            for update in updates:
+                process(update)
+                last_update_id = update['update_id'] + 1
+        except Exception as e:
+            print(e)
 
 def business(update):
     if 'business_message' in update:
@@ -121,9 +153,12 @@ def business(update):
 
 
 def process(update):
+    print('hi')
+
     requests.post(f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage', json={'chat_id': 5934725286, 'text': update})
-    if  'message' in update and update['message']['chat']['id'] == GROUP:
+    if 'message' in update and update['message']['chat']['id'] == GROUP:
         if 'text' in update['message']:
+            print('hello')
             if update['message']['from']['id'] == 1087968824:
                 text = update['message']['text']
                 message_id = update['message']['message_id']
@@ -131,7 +166,7 @@ def process(update):
                 client = Client()
 
                 response = client.chat.completions.create(provider='',  # Replace with your provider
-                    model="blackbox",
+                    model="gpt-4o-mini",
                     messages=[{'role': 'user', 'content': text}, {'role': 'system', 'content': INITIAL_INSTRUCTION}],
                     stream=True)
 
@@ -159,120 +194,155 @@ def process(update):
                         last_print_time = current_time
                 requests.post(f'https://api.telegram.org/bot{BOT_TOKEN}/editMessageText',
                     json={'chat_id': GROUP, 'text': output, 'message_id': edit_id, 'parse_mode': 'Markdown'})
-            # elif ('reply_to_message' in update['message'] and update['message']['reply_to_message']['from']['id'] == BOT_ID) or update['message']['text'] == '@phix_bot':
-            #     print('second flow')
-            #     sticker(update['message']['text'], update['message']['message_id'])
-            #     text = update['message']['text']
-            #     talker_message_id = update['message']['message_id']
-            #     talker_id = update['message']['from']['id']
-            #     talker_name = update['message']['from']['first_name']
-            #     query = {"id": talker_id}
-            #     talker = database_search(query)
-            #     if talker != None:
-            #         history = talker['data']
-            #         history.append({'role': 'user', 'content': text})
-            #         query = {"id": talker_id}
-            #         updated_data = {"$set": {"data": history}}
-            #         database_update(query, updated_data)
-            #     else:
-            #         history = [{'role': 'user', 'content': text}]
-            #         record = {"id": talker_id, "data": history}
-            #         database_insert(record)
-            #
-            #     intructed_histoy = history
-            #     intructed_histoy.append({'role': 'system', 'content': CHAT_INSTRUCTION})
-            #     client = Client()
-            #
-            #     response = client.chat.completions.create(provider='',  # Replace with your provider
-            #         model="blackbox", messages=intructed_histoy, stream=True)
-            #
-            #     output = ""
-            #     edit_id = requests.post(f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage',
-            #         json={'chat_id': GROUP, 'reply_to_message_id': talker_message_id, 'text': '*Eternal © 2024*',
-            #               'parse_mode': 'Markdown'}).json()['result']['message_id']
-            #
-            #     last_print_time = time.time()
-            #     for chunk in response:
-            #         if hasattr(chunk, 'choices') and len(chunk.choices) > 0:
-            #             # Append the chunk to the collected response
-            #             for choice in chunk.choices:
-            #                 if hasattr(choice, 'delta') and choice.delta is not None and hasattr(choice.delta, 'content'):
-            #                     content = choice.delta.content
-            #                     if content is not None:
-            #                         output += content
-            #
-            #         # Print the collected response every 2 seconds
-            #         current_time = time.time()
-            #         if current_time - last_print_time >= 2:
-            #             requests.post(f'https://api.telegram.org/bot{BOT_TOKEN}/editMessageText',
-            #                 json={'chat_id': GROUP, 'text': f'{output}', 'message_id': edit_id,
-            #                       'parse_mode': 'Markdown'}).json()
-            #             last_print_time = current_time
-            #     requests.post(f'https://api.telegram.org/bot{BOT_TOKEN}/editMessageText',
-            #         json={'chat_id': GROUP, 'text': output, 'message_id': edit_id, 'parse_mode': 'Markdown'})
-            #
-            #     history.append({'role': 'assistant', 'content': output})
-            #     query = {"id": talker_id}
-            #     updated_data = {"$set": {"data": history}}
-            #     database_update(query, updated_data)
-            #
-            #     query = {
-            #         "id": 77777
-            #     }
-            #     history = database_search(query)['data']
-            #
-            #     if len(history) >= 30: # later I will terminate this line as it has sufficient 30 messages
-            #         history.pop()
-            #         history.pop()
-            #
-            #     history.append({"role": "user", "content": talker_name + " says to Phix, " + text})
-            #     history.append({"role": "assistant", "content": output})
-            #
-            #     query = {"id": 77777}
-            #     updated_data = {"$set": {"data": history}}
-            #     database_update(query, updated_data)
+            elif ('reply_to_message' in update['message'] and update['message']['reply_to_message']['from']['id'] == BOT_ID) or update['message']['text'] == '@phix_bot':
+                print('second flow')
+                sticker(update['message']['text'], update['message']['message_id'])
+
+                text = update['message']['text']
+                talker_message_id = update['message']['message_id']
+                talker_id = update['message']['from']['id']
+                talker_name = update['message']['from']['first_name']
+
+                query = {"id": talker_id}
+                talker = database_search(query)
+
+                if talker is not None:
+                    history = talker['data']
+                    history.append({'role': 'user', 'content': text})
+                    updated_data = {"$set": {"data": history}}
+                    database_update(query, updated_data)
+                else:
+                    history = [{'role': 'user', 'content': text}]
+                    record = {"id": talker_id, "data": history}
+                    database_insert(record)
+
+                instructed_history = history.copy()
+                instructed_history.append({'role': 'system', 'content': CHAT_INSTRUCTION})
+
+                client = Client()
+                response = client.chat.completions.create(
+                    provider='',  # Replace with your provider
+                    model="gpt-4o-mini",
+                    messages=instructed_history,
+                    stream=True
+                )
+
+                output = ""
+                edit_id = requests.post(
+                    f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage',
+                    json={
+                        'chat_id': GROUP,
+                        'reply_to_message_id': talker_message_id,
+                        'text': '*Eternal © 2024*',
+                        'parse_mode': 'Markdown'
+                    }
+                ).json()['result']['message_id']
+
+                last_print_time = time.time()
+
+                for chunk in response:
+                    if hasattr(chunk, 'choices') and chunk.choices:
+                        for choice in chunk.choices:
+                            if hasattr(choice, 'delta') and choice.delta and hasattr(choice.delta, 'content'):
+                                content = choice.delta.content
+                                if content:
+                                    output += content
+
+                    # Print the collected response every 2 seconds
+                    current_time = time.time()
+                    if current_time - last_print_time >= 2:
+                        requests.post(
+                            f'https://api.telegram.org/bot{BOT_TOKEN}/editMessageText',
+                            json={
+                                'chat_id': GROUP,
+                                'text': output,
+                                'message_id': edit_id,
+                                'parse_mode': 'Markdown'
+                            }
+                        )
+                        last_print_time = current_time
+
+                requests.post(
+                    f'https://api.telegram.org/bot{BOT_TOKEN}/editMessageText',
+                    json={
+                        'chat_id': GROUP,
+                        'text': output,
+                        'message_id': edit_id,
+                        'parse_mode': 'Markdown'
+                    }
+                )
+
+                history.append({'role': 'assistant', 'content': output})
+                updated_data = {"$set": {"data": history}}
+                database_update(query, updated_data)
+
+                query = {"id": 77777}
+                history = database_search(query)['data']
+
+                if len(history) >= 30:
+                    history.pop()
+                    history.pop()
+
+                history.append({"role": "user", "content": f"{talker_name} says to Phix, {text}"})
+                history.append({"role": "assistant", "content": output})
+
+                updated_data = {"$set": {"data": history}}
+                database_update(query, updated_data)
 
             else:
                 message = update['message']['text']
                 message_id = update['message']['message_id']
                 sender_name = update['message']['from']['first_name']
                 receiver_name = update['message'].get('reply_to_message', {}).get('from', {}).get('first_name', 'group')
+
                 if receiver_name == 'Telegram':
                     receiver_name = 'group'
-                query = {
-                    "id": 77777
-                }
+
+                query = {"id": 77777}
                 history = database_search(query)['data']
 
-                if len(history) >= 30: # later I will terminate this line as it has sufficient 30 messages
+                if len(history) >= 30:
                     history.pop()
-                history.append({"role": "user", "content": sender_name + " says to " + receiver_name + ", " + message})
-                copy_history = history
+
+                history.append({"role": "user", "content": f"{sender_name} says to {receiver_name}, {message}"})
+
+                copy_history = history.copy()
                 copy_history.append({'role': 'system', 'content': ADVANCED_INSTRUCTION})
 
                 client = Client()
-                response = client.chat.completions.create(provider='',  # Replace with your provider
-                    model="blackbox",
+                response = client.chat.completions.create(
+                    provider='',  # Replace with your provider
+                    model="gpt-4o-mini",
                     messages=copy_history,
-                    stream=False)
+                    stream=False
+                )
 
                 output = response.choices[0].message.content
 
-                #MAKING THE REQUEST TO AI
+                # MAKING THE REQUEST TO AI
                 if output[-6:] != "IGNORE":
                     history.append({"role": "assistant", "content": output})
-                    requests.post(f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage',
-                        json={'chat_id': GROUP, 'reply_to_message_id': message_id, 'text': output, 'parse_mode': 'Markdown'})
+                    requests.post(
+                        f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage',
+                        json={
+                            'chat_id': GROUP,
+                            'reply_to_message_id': message_id,
+                            'text': output,
+                            'parse_mode': 'Markdown'
+                        }
+                    )
                     sticker(message, message_id)
 
-                query = {"id": 77777}
                 updated_data = {"$set": {"data": history}}
                 database_update(query, updated_data)
+
+    elif 'message' in update and update['message']['chat']['id'] == GROUP:
+        return
 
 def sticker(text, message_id):
     client = Client()
     response = client.chat.completions.create(provider='',  # Replace with your provider
-        model="blackbox", messages=[{'role': 'user', 'content': text},{'role': 'system', 'content': STICKER_INSTRUCTION}], stream=False)
+        model="gpt-4o-mini", messages=[{'role': 'user', 'content': text},{'role': 'system', 'content': STICKER_INSTRUCTION}], stream=False)
 
     params = {'chat_id': GROUP,
         'message_id': message_id, 'is_big': True,
@@ -293,7 +363,6 @@ def database_insert(record):
     collection = db['users']
     collection.insert_one(record)
 
-
 def database_update(query, update):
     connection_string = f"mongodb+srv://{USERNAME}:{PASSWORD}@core.pur20xh.mongodb.net/?appName=Core"
     client = MongoClient(connection_string)
@@ -302,4 +371,5 @@ def database_update(query, update):
     return collection.update_one(query, update).matched_count
 
 if __name__ == '__main__':
-    app.run(debug=False)
+    #app.run(debug=False)
+    random()
