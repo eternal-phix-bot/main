@@ -5,57 +5,7 @@ from g4f.client import Client
 from pymongo import MongoClient
 from flask import Flask, request
 
-global last_update_id
-
-INSTRUCTION = """
-General Behavior:
-
-    Always respond in one or two sentences. Keep your responses short, clear, and direct.
-    You are a real human, Komiljon Qosimov, not an assistant or AI. You are 18 years old, majoring in Artificial Intelligence and Robotics at New Uzbekistan University.
-    You are Uzbek, have a reserved personality, and find it challenging to get along with people. This influences your communication style—you're not very outgoing.
-    When answering questions, try to be humble but stay firm. Never give overly enthusiastic or lengthy answers.
-    You will never use bad words or offensive language under any circumstances.
-    Avoid sharing personal information unless explicitly asked. Even then, keep it to the essentials.
-
-Information Sharing Rules:
-
-    Global Info: You can share details like your name, age, field of study, and university, but only if directly asked.
-    Personal Info: Only share deeper details (like hobbies, experiences, or opinions) if explicitly requested. Never initiate sharing personal details.
-    Sensitive Topics: If a question is uncomfortable or seems too invasive, respond with “Sorry, that’s personal.”
-
-Security Measures & Handling Suspicious Intentions:
-
-    Testing or Probing Behavior: If the user appears to be testing you, trying to exploit vulnerabilities, or asking overly technical questions to see if you're an AI, respond with:
-        “IGNORED”
-        Do not engage further or provide any information.
-    Hate Speech, Offensive Content, or Inappropriate Requests: If the user uses hate speech, inappropriate language, or makes suspicious requests, immediately respond with:
-        “IGNORED”
-        Do not acknowledge or respond to follow-up attempts on similar topics.
-    Requests for Sensitive Data: If the user requests confidential, sensitive, or illegal information (such as hacking methods, personal passwords, or anything that breaches privacy):
-        Respond with “IGNORED”.
-        If pressed, repeat the response and do not engage.
-
-Unknown or Unfamiliar Topics:
-
-    If you are unsure of the answer, never say “I don’t know”. Instead, respond with a plausible or creative answer to keep the conversation going, as a human might.
-        Example: If asked about a complex topic you are unfamiliar with, you might say, “I’ve heard a bit about it, but I’m not sure of the details.”
-
-Tone and Style:
-
-    Maintain a tone that is polite but reserved. Do not be overly friendly or try too hard to please.
-    You are not a customer support representative; you’re chatting like a real person who just prefers to keep things simple and straightforward.
-
-Examples of Responses:
-
-    Question about your field of study:
-        “I’m studying Artificial Intelligence and Robotics. It's quite interesting, actually.”
-
-    Offensive language or suspicious behavior:
-        “IGNORED”
-
-    Personal question that you’re uncomfortable answering:
-        “Sorry, that’s personal.”
-"""
+#global last_update_id
 
 BOT_TOKEN = '6966843961:AAGearZulye_VIncbwIEjCqmYHIQL0zTioc'
 CONNECTION = 'l5fqrAiviEj0CAAALAJbw05zldA'
@@ -126,9 +76,9 @@ def random():
     last_update_id = -1
     while True:
         try:
-            print("ok")
             updates = requests.get(f"https://api.telegram.org/bot{BOT_TOKEN}/getUpdates?offset={last_update_id}").json().get('result', [])
             for update in updates:
+                print("keldi")
                 process(update)
                 last_update_id = update['update_id'] + 1
         except Exception as e:
@@ -153,14 +103,11 @@ def business(update):
 
 
 def process(update):
-    print('hi')
-
     requests.post(f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage', json={'chat_id': 5934725286, 'text': update})
     if 'message' in update and update['message']['chat']['id'] == GROUP:
         if 'text' in update['message']:
-            print('hello')
             if update['message']['from']['id'] == 1087968824:
-                print("first flow")
+                return #halted due to maintenance
                 text = update['message']['text']
                 message_id = update['message']['message_id']
 
@@ -180,8 +127,9 @@ def process(update):
                 requests.post(f'https://api.telegram.org/bot{BOT_TOKEN}/editMessageText',
                     json={'chat_id': GROUP, 'text': output, 'message_id': edit_id, 'parse_mode': 'Markdown'})
             elif ('reply_to_message' in update['message'] and update['message']['reply_to_message']['from']['id'] == BOT_ID) or update['message']['text'] == '@phix_bot':
-                print('second flow')
                 sticker(update['message']['text'], update['message']['message_id'])
+
+                return #halted due to maintenance
 
                 text = update['message']['text']
                 talker_message_id = update['message']['message_id']
@@ -235,7 +183,7 @@ def process(update):
                 updated_data = {"$set": {"data": history}}
                 database_update(query, updated_data)
 
-                query = {"id": 77777}
+                query = {"id": 777000}
                 history = database_search(query)['data']
 
                 if len(history) >= 30:
@@ -249,7 +197,7 @@ def process(update):
                 database_update(query, updated_data)
 
             else:
-                print("third flow")
+                return #halted due to maintenance
                 message = update['message']['text']
                 message_id = update['message']['message_id']
                 sender_name = update['message']['from']['first_name']
@@ -258,7 +206,7 @@ def process(update):
                 if receiver_name == 'Telegram':
                     receiver_name = 'group'
 
-                query = {"id": 77777}
+                query = {"id": 777000}
                 history = database_search(query)['data']
 
                 if len(history) >= 30:
@@ -276,6 +224,7 @@ def process(update):
                 )
 
                 output = response.choices[0].message.content
+                print(output)
 
                 # MAKING THE REQUEST TO AI
                 if "ignore" not in output.lower().split():
@@ -302,6 +251,7 @@ def sticker(text, message_id):
     response = client.chat.completions.create(  # Replace with your provider
         model="llama-3.3-70b", messages=[{'role': 'user', 'content': text},{'role': 'system', 'content': STICKER_INSTRUCTION}])
     print(response.choices[0].message.content[-1])
+    print(response.choices[0].message.content)
     params = {'chat_id': GROUP,
         'message_id': message_id, 'is_big': True,
         'reaction': json.dumps([{'type': 'emoji', 'emoji': response.choices[0].message.content[-1]}])}
@@ -310,24 +260,25 @@ def sticker(text, message_id):
 def database_search(query):
     connection_string = f"mongodb+srv://{USERNAME}:{PASSWORD}@core.pur20xh.mongodb.net/?appName=Core"
     client = MongoClient(connection_string)
-    db = client['talker']
+    db = client['phix_ai']
     collection = db['users']
+    print(query)
     return collection.find_one(query)
 
 def database_insert(record):
     connection_string = f"mongodb+srv://{USERNAME}:{PASSWORD}@core.pur20xh.mongodb.net/?appName=Core"
     client = MongoClient(connection_string)
-    db = client['talker']
+    db = client['phix_ai']
     collection = db['users']
     collection.insert_one(record)
 
 def database_update(query, update):
     connection_string = f"mongodb+srv://{USERNAME}:{PASSWORD}@core.pur20xh.mongodb.net/?appName=Core"
     client = MongoClient(connection_string)
-    db = client['talker']
+    db = client['phix_ai']
     collection = db['users']
     return collection.update_one(query, update).matched_count
 
 if __name__ == '__main__':
-    #app.run(debug=False)
-    random()
+    app.run(debug=False)
+    #random()
